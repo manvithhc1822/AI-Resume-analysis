@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from pathlib import Path
+from uuid import uuid4
+import os
 import re
 
 from PyPDF2 import PdfReader
@@ -13,17 +15,28 @@ from docx import Document
 # =========================================================
 
 app = Flask(__name__)
+
+# Allow frontend to communicate with Flask backend
 CORS(app)
 
 
 # =========================================================
-# FOLDERS
+# BASE DIRECTORY
 # =========================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
+
+# =========================================================
+# UPLOAD FOLDER
+# =========================================================
+
 UPLOAD_FOLDER = BASE_DIR / "uploads"
 UPLOAD_FOLDER.mkdir(exist_ok=True)
+
+
+# Maximum upload size = 10 MB
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 
 # =========================================================
@@ -52,40 +65,51 @@ SKILLS = [
     "angular",
     "vue",
     "bootstrap",
+
     "flask",
     "django",
     "fastapi",
     "node.js",
     "node",
+
     "sql",
     "mysql",
     "postgresql",
     "mongodb",
     "oracle",
+    "database",
+
     "git",
     "github",
     "docker",
     "linux",
+
     "azure",
     "aws",
+
     "rest api",
     "api",
     "json",
     "postman",
+
     "pandas",
     "numpy",
     "matplotlib",
     "power bi",
     "excel",
+
     "machine learning",
     "artificial intelligence",
     "opencv",
+
     "testing",
     "selenium",
     "oops",
     "data structures",
+
     "php",
     "laravel",
+
     "android",
     "kotlin",
     "firebase"
@@ -166,25 +190,27 @@ JOB_ROLES = {
 
 
 # =========================================================
-# CHECK FILE EXTENSION
+# CHECK ALLOWED FILE
 # =========================================================
 
 def allowed_file(filename):
 
     return (
         "." in filename
-        and filename.rsplit(".", 1)[1].lower()
+        and
+        filename.rsplit(".", 1)[1].lower()
         in ALLOWED_EXTENSIONS
     )
 
 
 # =========================================================
-# EXTRACT TEXT
+# EXTRACT TEXT FROM RESUME
 # =========================================================
 
 def extract_text(file_path):
 
     extension = file_path.suffix.lower()
+
 
     # -------------------------
     # PDF
@@ -201,6 +227,7 @@ def extract_text(file_path):
             page_text = page.extract_text()
 
             if page_text:
+
                 text.append(page_text)
 
         return "\n".join(text)
@@ -212,11 +239,15 @@ def extract_text(file_path):
 
     if extension == ".docx":
 
-        document = Document(str(file_path))
+        document = Document(
+            str(file_path)
+        )
 
         text = []
 
+
         # Paragraphs
+
         for paragraph in document.paragraphs:
 
             if paragraph.text.strip():
@@ -227,6 +258,7 @@ def extract_text(file_path):
 
 
         # Tables
+
         for table in document.tables:
 
             for row in table.rows:
@@ -238,6 +270,7 @@ def extract_text(file_path):
                         text.append(
                             cell.text
                         )
+
 
         return "\n".join(text)
 
@@ -258,15 +291,18 @@ def extract_text(file_path):
 
 
 # =========================================================
-# FIND SKILL
+# CHECK SKILL
 # =========================================================
 
 def contains_skill(text, skill):
 
     text = text.lower()
+
     skill = skill.lower()
 
-    # Special word-boundary handling
+
+    # Word boundary for short skills
+
     if skill in ["c", "api"]:
 
         pattern = (
@@ -276,8 +312,12 @@ def contains_skill(text, skill):
         )
 
         return bool(
-            re.search(pattern, text)
+            re.search(
+                pattern,
+                text
+            )
         )
+
 
     return skill in text
 
@@ -318,6 +358,7 @@ def find_email(text):
     )
 
     if match:
+
         return match.group(0)
 
     return ""
@@ -339,6 +380,7 @@ def find_phone(text):
     )
 
     if match:
+
         return match.group(0)
 
     return ""
@@ -356,6 +398,7 @@ def calculate_score(text, skills):
 
 
     # Resume length
+
     if len(text) >= 500:
 
         score += 15
@@ -366,6 +409,7 @@ def calculate_score(text, skills):
 
 
     # Resume sections
+
     sections = [
         "education",
         "experience",
@@ -386,6 +430,7 @@ def calculate_score(text, skills):
 
 
     # Skills
+
     score += min(
         len(skills) * 3,
         30
@@ -393,18 +438,21 @@ def calculate_score(text, skills):
 
 
     # Email
+
     if find_email(text):
 
         score += 5
 
 
     # Phone
+
     if find_phone(text):
 
         score += 5
 
 
     # Action words
+
     action_words = [
         "developed",
         "created",
@@ -417,6 +465,7 @@ def calculate_score(text, skills):
 
 
     action_count = 0
+
 
     for word in action_words:
 
@@ -466,18 +515,13 @@ def calculate_job_matches(skills):
                 missing.append(skill)
 
 
-        if len(required_skills) > 0:
-
-            percentage = int(
-                (
-                    len(matched)
-                    / len(required_skills)
-                ) * 100
-            )
-
-        else:
-
-            percentage = 0
+        percentage = int(
+            (
+                len(matched)
+                /
+                len(required_skills)
+            ) * 100
+        )
 
 
         results.append({
@@ -489,6 +533,7 @@ def calculate_job_matches(skills):
             "matched": matched,
 
             "missing": missing
+
         })
 
 
@@ -602,7 +647,7 @@ def generate_suggestions(
 
 
 # =========================================================
-# HOME PAGE
+# FRONTEND
 # =========================================================
 
 @app.route("/")
@@ -615,41 +660,22 @@ def home():
 
 
 # =========================================================
-# CSS
-# =========================================================
-
-@app.route("/style.css")
-def css():
-
-    return send_from_directory(
-        BASE_DIR,
-        "style.css"
-    )
-
-
-# =========================================================
-# JAVASCRIPT
-# =========================================================
-
-@app.route("/script.js")
-def javascript():
-
-    return send_from_directory(
-        BASE_DIR,
-        "script.js"
-    )
-
-
-# =========================================================
 # HEALTH CHECK
 # =========================================================
 
-@app.route("/health", methods=["GET"])
+@app.route(
+    "/health",
+    methods=["GET"]
+)
 def health():
 
     return jsonify({
+
         "status": "success",
-        "message": "AI Resume Analyzer backend is running."
+
+        "message":
+            "AI Resume Analyzer backend is running."
+
     })
 
 
@@ -665,16 +691,18 @@ def analyze_resume():
 
     file_path = None
 
+
     try:
 
         # -------------------------
-        # Check uploaded file
+        # Check file
         # -------------------------
 
         if "resume" not in request.files:
 
             return jsonify({
-                "error": "Please select a resume."
+                "error":
+                    "Please select a resume."
             }), 400
 
 
@@ -688,7 +716,8 @@ def analyze_resume():
         if not file.filename:
 
             return jsonify({
-                "error": "Please select a resume."
+                "error":
+                    "Please select a resume."
             }), 400
 
 
@@ -701,10 +730,10 @@ def analyze_resume():
         ):
 
             return jsonify({
-                "error": (
-                    "Only PDF, DOCX and TXT "
-                    "files are allowed."
-                )
+
+                "error":
+                    "Only PDF, DOCX and TXT files are allowed."
+
             }), 400
 
 
@@ -712,19 +741,32 @@ def analyze_resume():
         # Secure filename
         # -------------------------
 
-        filename = secure_filename(
+        original_name = secure_filename(
             file.filename
+        )
+
+
+        # Create unique filename
+        # Prevents two users having
+        # the same filename
+
+        unique_name = (
+            uuid4().hex
+            + "_"
+            + original_name
+        )
+
+
+        file_path = (
+            UPLOAD_FOLDER
+            /
+            unique_name
         )
 
 
         # -------------------------
         # Save file
         # -------------------------
-
-        file_path = (
-            UPLOAD_FOLDER
-            / filename
-        )
 
         file.save(file_path)
 
@@ -741,10 +783,10 @@ def analyze_resume():
         if not text:
 
             return jsonify({
-                "error": (
-                    "No readable text found "
-                    "in the resume."
-                )
+
+                "error":
+                    "No readable text found in the resume."
+
             }), 400
 
 
@@ -758,7 +800,7 @@ def analyze_resume():
 
 
         # -------------------------
-        # Score
+        # Calculate score
         # -------------------------
 
         score = calculate_score(
@@ -802,9 +844,11 @@ def analyze_resume():
 
         keywords = []
 
+
         for word in words:
 
             clean_word = word.lower()
+
 
             if len(clean_word) >= 5:
 
@@ -819,30 +863,42 @@ def analyze_resume():
 
 
         # -------------------------
-        # Final JSON response
+        # FINAL RESULT
         # -------------------------
 
         result = {
 
-            "filename": filename,
+            "filename":
+                original_name,
 
-            "score": score,
+            "score":
+                score,
 
-            "skills": skills,
+            "skills":
+                skills,
 
-            "email": find_email(text),
+            "email":
+                find_email(text),
 
-            "phone": find_phone(text),
+            "phone":
+                find_phone(text),
 
-            "word_count": len(words),
+            "word_count":
+                len(words),
 
-            "keywords": keywords,
+            "keywords":
+                keywords,
 
-            "job_matches": job_matches[:5],
+            "job_matches":
+                job_matches[:5],
 
-            "suggestions": suggestions
+            "suggestions":
+                suggestions
+
         }
 
+
+        # Return JSON
 
         return jsonify(result), 200
 
@@ -854,15 +910,19 @@ def analyze_resume():
             repr(error)
         )
 
+
         return jsonify({
-            "error": str(error)
+
+            "error":
+                str(error)
+
         }), 500
 
 
     finally:
 
         # -------------------------
-        # Delete uploaded file
+        # Delete temporary file
         # -------------------------
 
         if (
@@ -881,30 +941,68 @@ def analyze_resume():
 
 
 # =========================================================
+# FILE TOO LARGE ERROR
+# =========================================================
+
+@app.errorhandler(413)
+def file_too_large(error):
+
+    return jsonify({
+
+        "error":
+            "File is too large. Maximum size is 10 MB."
+
+    }), 413
+
+
+# =========================================================
 # START SERVER
 # =========================================================
 
 if __name__ == "__main__":
+
+    # Cloud platforms provide PORT
+    # through environment variable.
+    # Local computer uses 5000.
+
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
+    )
+
 
     print("")
     print("=" * 60)
     print("AI RESUME ANALYZER")
     print("=" * 60)
     print("")
-    print("Frontend:")
-    print("http://127.0.0.1:5000")
+    print(
+        "Server running on port:",
+        port
+    )
     print("")
-    print("API:")
-    print("http://127.0.0.1:5000/analyze")
+    print(
+        "Local URL:"
+    )
+    print(
+        f"http://127.0.0.1:{port}"
+    )
     print("")
-    print("Health:")
-    print("http://127.0.0.1:5000/health")
+    print(
+        "Health URL:"
+    )
+    print(
+        f"http://127.0.0.1:{port}/health"
+    )
     print("")
     print("=" * 60)
     print("")
 
+
     app.run(
         host="0.0.0.0",
-        port=5000,
-        debug=True
+        port=port,
+        debug=False
     )
