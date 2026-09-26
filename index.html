@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Resume Analyzer</title>
+
+<style>
+
+/* =========================
+   RESET
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(
+            circle at 80% 10%,
+            #182451,
+            transparent 35%
+        ),
+        #07111f;
+    color: #ffffff;
+    min-height: 100vh;
+}
+
+
+/* =========================
+   NAVBAR
+========================= */
+
+header {
+    height: 70px;
+    padding: 0 7%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid #21334b;
+
+    background: rgba(7, 17, 31, 0.95);
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+header a {
+    color: #9eafc4;
+    text-decoration: none;
+}
+
+header a:hover {
+    color: #ffffff;
+}
+
+
+/* =========================
+   MAIN
+========================= */
+
+main {
+    width: 90%;
+    max-width: 1150px;
+    margin: auto;
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+    min-height: 650px;
+
+    display: grid;
+
+    grid-template-columns: 1.1fr 0.9fr;
+
+    gap: 60px;
+
+    align-items: center;
+}
+
+.badge {
+    display: inline-block;
+
+    padding: 7px 13px;
+
+    border-radius: 50px;
+
+    background: #171b40;
+
+    border: 1px solid #454095;
+
+    color: #aaa5ff;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+.hero h1 {
+    font-size: clamp(42px, 6vw, 72px);
+
+    line-height: 1.05;
+
+    margin: 25px 0;
+}
+
+.hero h1 span {
+    display: block;
+
+    background:
+        linear-gradient(
+            90deg,
+            #8d85ff,
+            #32d8c8
+        );
+
+    -webkit-background-clip: text;
+
+    color: transparent;
+}
+
+.hero p {
+    max-width: 650px;
+
+    color: #9eafc4;
+
+    font-size: 18px;
+
+    line-height: 1.7;
+}
+
+
+/* =========================
+   UPLOAD CARD
+========================= */
+
+.upload-card,
+.card {
+    background:
+        linear-gradient(
+            145deg,
+            #112035,
+            #0b1728
+        );
+
+    border: 1px solid #21334b;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.25);
+}
+
+.upload-card {
+    padding: 35px;
+
+    text-align: center;
+}
+
+.upload-icon {
+    width: 70px;
+    height: 70px;
+
+    margin: auto;
+
+    display: grid;
+
+    place-items: center;
+
+    background: #191f4c;
+
+    border-radius: 18px;
+
+    font-size: 30px;
+}
+
+.upload-card h2 {
+    margin-top: 20px;
+}
+
+.upload-card > p {
+    color: #9eafc4;
+
+    margin: 10px 0 20px;
+}
+
+
+/* =========================
+   DROP ZONE
+========================= */
+
+.drop-zone {
+    min-height: 150px;
+
+    border: 2px dashed #405473;
+
+    border-radius: 15px;
+
+    display: grid;
+
+    place-content: center;
+
+    gap: 8px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.drop-zone:hover,
+.drop-zone.dragover {
+    border-color: #7067ff;
+
+    background: #121a3c;
+}
+
+.drop-zone small {
+    color: #9eafc4;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+
+button {
+    width: 100%;
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 15px;
+
+    margin-top: 15px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #7067ff,
+            #857eff
+        );
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:disabled {
+    opacity: 0.6;
+
+    cursor: wait;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+#status {
+    min-height: 20px;
+
+    margin-top: 15px;
+
+    color: #9eafc4;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   RESULTS
+========================= */
+
+.results {
+    padding: 70px 0;
+}
+
+.title {
+    text-align: center;
+
+    margin-bottom: 30px;
+}
+
+.title h2 {
+    font-size: 40px;
+
+    margin: 15px 0 8px;
+}
+
+.title p {
+    color: #9eafc4;
+}
+
+
+/* =========================
+   TOP GRID
+========================= */
+
+.top-grid {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+}
+
+
+/* =========================
+   MAIN GRID
+========================= */
+
+.grid {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 20px;
+}
+
+.card {
+    padding: 28px;
+}
+
+.card h3 {
+    margin-bottom: 20px;
+}
+
+.card p {
+    color: #9eafc4;
+
+    margin: 12px 0;
+}
+
+.card strong {
+    color: white;
+}
+
+
+/* =========================
+   SCORE
+========================= */
+
+.score-card {
+    text-align: center;
+}
+
+.score-circle {
+    width: 150px;
+    height: 150px;
+
+    margin: 20px auto;
+
+    border-radius: 50%;
+
+    border: 10px solid #263957;
+
+    display: grid;
+
+    place-content: center;
+}
+
+.score-circle span {
+    font-size: 42px;
+
+    font-weight: bold;
+}
+
+.score-circle small {
+    color: #9eafc4;
+}
+
+.progress {
+    height: 8px;
+
+    background: #1b2b42;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+}
+
+.progress div {
+    width: 0;
+
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            #7067ff,
+            #20cdbb
+        );
+
+    transition: width 1s;
+}
+
+
+/* =========================
+   SKILL CHIPS
+========================= */
+
+.chips {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+.chip {
+    padding: 8px 12px;
+
+    background: #182942;
+
+    border: 1px solid #2d4260;
+
+    border-radius: 30px;
+
+    color: #d4dfec;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   JOB MATCH
+========================= */
+
+.job {
+    padding: 13px 0;
+
+    border-bottom: 1px solid #21334b;
+}
+
+.job:last-child {
+    border-bottom: none;
+}
+
+.job-head {
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-bottom: 8px;
+}
+
+.job-head span {
+    color: #20cdbb;
+
+    font-weight: bold;
+}
+
+.job-bar {
+    height: 6px;
+
+    background: #1b2b42;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+}
+
+.job-bar div {
+    height: 100%;
+
+    background: #20cdbb;
+}
+
+.job small {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #9eafc4;
+}
+
+
+/* =========================
+   SUGGESTIONS
+========================= */
+
+ul {
+    padding-left: 20px;
+}
+
+li {
+    color: #9eafc4;
+
+    line-height: 1.6;
+
+    margin: 10px 0;
+}
+
+
+/* =========================
+   HOW IT WORKS
+========================= */
+
+.how {
+    padding: 30px 0 90px;
+}
+
+.steps {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 20px;
+}
+
+.step {
+    padding: 30px;
+
+    background: #0e1b2d;
+
+    border: 1px solid #21334b;
+
+    border-radius: 18px;
+}
+
+.step b {
+    color: #837cff;
+
+    font-size: 28px;
+}
+
+.step h3 {
+    margin: 15px 0 8px;
+}
+
+.step p {
+    color: #9eafc4;
+
+    line-height: 1.5;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+    border-top: 1px solid #21334b;
+
+    text-align: center;
+
+    padding: 25px;
+
+    color: #9eafc4;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   HIDDEN
+========================= */
+
+.hidden {
+    display: none;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 850px) {
+
+    .hero {
+        grid-template-columns: 1fr;
+
+        padding: 60px 0;
+    }
+
+    .top-grid,
+    .grid,
+    .steps {
+        grid-template-columns: 1fr;
+    }
+
+    .hero h1 {
+        font-size: 48px;
+    }
+}
+
+@media (max-width: 500px) {
+
+    header {
+        padding: 0 5%;
+    }
+
+    header a {
+        display: none;
+    }
+
+    .hero h1 {
+        font-size: 40px;
+    }
+
+    .upload-card,
+    .card {
+        padding: 20px;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<header>
+
+    <div class="logo">
+        🤖 AI Resume Analyzer
+    </div>
+
+    <a href="#how">
+        How It Works
+    </a>
+
+</header>
+
+
+<main>
+
+
+<section class="hero">
+
+
+    <div class="hero-content">
+
+        <span class="badge">
+            AI POWERED RESUME ANALYSIS
+        </span>
+
+        <h1>
+
+            Analyze Your Resume.
+
+            <span>
+                Improve Your Career.
+            </span>
+
+        </h1>
+
+        <p>
+
+            Upload your resume and get a detailed
+            analysis of your skills, job matches,
+            keywords, resume score and improvement
+            suggestions.
+
+        </p>
+
+    </div>
+
+
+
+    <div class="upload-card">
+
+
+        <div class="upload-icon">
+            📄
+        </div>
+
+
+        <h2>
+            Upload Your Resume
+        </h2>
+
+
+        <p>
+            PDF, DOCX or TXT
+        </p>
+
+
+
+        <form id="resumeForm">
+
+
+            <label
+                class="drop-zone"
+                id="dropZone"
+            >
+
+                <input
+                    type="file"
+                    id="resume"
+                    name="resume"
+                    accept=".pdf,.docx,.txt"
+                    hidden
+                >
+
+                <strong id="fileText">
+                    Choose Resume
+                </strong>
+
+                <small>
+                    or drag and drop here
+                </small>
+
+            </label>
+
+
+
+            <button
+                type="submit"
+                id="analyzeBtn"
+            >
+
+                Analyze Resume
+
+            </button>
+
+
+        </form>
+
+
+        <div id="status"></div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<section
+    id="results"
+    class="results hidden"
+>
+
+
+    <div class="title">
+
+        <span class="badge">
+            ANALYSIS COMPLETE
+        </span>
+
+        <h2>
+            Resume Analysis
+        </h2>
+
+        <p id="filename"></p>
+
+    </div>
+
+
+
+    <div class="top-grid">
+
+
+
+        <div class="card score-card">
+
+            <h3>
+                Resume Score
+            </h3>
+
+
+            <div class="score-circle">
+
+                <span id="score">
+                    0
+                </span>
+
+                <small>
+                    /100
+                </small>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div id="scoreBar"></div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="card">
+
+            <h3>
+                Contact Information
+            </h3>
+
+
+            <p>
+
+                <strong>
+                    Email:
+                </strong>
+
+                <span id="email">
+                    Not found
+                </span>
+
+            </p>
+
+
+            <p>
+
+                <strong>
+                    Phone:
+                </strong>
+
+                <span id="phone">
+                    Not found
+                </span>
+
+            </p>
+
+
+            <p>
+
+                <strong>
+                    Word Count:
+                </strong>
+
+                <span id="wordCount">
+                    0
+                </span>
+
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="grid">
+
+
+
+        <div class="card">
+
+            <h3>
+                🛠 Detected Skills
+            </h3>
+
+            <div
+                id="skills"
+                class="chips"
+            ></div>
+
+        </div>
+
+
+
+        <div class="card">
+
+            <h3>
+                💼 Job Role Matching
+            </h3>
+
+            <div id="jobMatches"></div>
+
+        </div>
+
+
+
+        <div class="card">
+
+            <h3>
+                🔑 Keywords
+            </h3>
+
+            <div
+                id="keywords"
+                class="chips"
+            ></div>
+
+        </div>
+
+
+
+        <div class="card">
+
+            <h3>
+                💡 Suggestions
+            </h3>
+
+            <ul id="suggestions"></ul>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<section
+    id="how"
+    class="how"
+>
+
+
+    <div class="title">
+
+        <span class="badge">
+            SIMPLE PROCESS
+        </span>
+
+        <h2>
+            How It Works
+        </h2>
+
+    </div>
+
+
+
+    <div class="steps">
+
+
+        <div class="step">
+
+            <b>
+                01
+            </b>
+
+            <h3>
+                Upload
+            </h3>
+
+            <p>
+                Upload your PDF, DOCX or TXT resume.
+            </p>
+
+        </div>
+
+
+
+        <div class="step">
+
+            <b>
+                02
+            </b>
+
+            <h3>
+                Analyze
+            </h3>
+
+            <p>
+                Python extracts and analyzes your resume.
+            </p>
+
+        </div>
+
+
+
+        <div class="step">
+
+            <b>
+                03
+            </b>
+
+            <h3>
+                Improve
+            </h3>
+
+            <p>
+                Check your score, skills and suggestions.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+</main>
+
+
+
+<footer>
+
+    AI Resume Analyzer
+    •
+    HTML
+    •
+    CSS
+    •
+    JavaScript
+    •
+    Python Flask
+
+</footer>
+
+
+
+<script>
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const form =
+    document.getElementById(
+        "resumeForm"
+    );
+
+const input =
+    document.getElementById(
+        "resume"
+    );
+
+const fileText =
+    document.getElementById(
+        "fileText"
+    );
+
+const dropZone =
+    document.getElementById(
+        "dropZone"
+    );
+
+const statusBox =
+    document.getElementById(
+        "status"
+    );
+
+const analyzeButton =
+    document.getElementById(
+        "analyzeBtn"
+    );
+
+const results =
+    document.getElementById(
+        "results"
+    );
+
+
+
+/* =========================
+   FILE SELECT
+========================= */
+
+input.addEventListener(
+    "change",
+    function () {
+
+        if (
+            input.files.length > 0
+        ) {
+
+            fileText.textContent =
+                input.files[0].name;
+
+        }
+
+    }
+);
+
+
+
+/* =========================
+   DRAG OVER
+========================= */
+
+dropZone.addEventListener(
+    "dragover",
+    function (event) {
+
+        event.preventDefault();
+
+        dropZone.classList.add(
+            "dragover"
+        );
+
+    }
+);
+
+
+
+/* =========================
+   DRAG LEAVE
+========================= */
+
+dropZone.addEventListener(
+    "dragleave",
+    function () {
+
+        dropZone.classList.remove(
+            "dragover"
+        );
+
+    }
+);
+
+
+
+/* =========================
+   DROP
+========================= */
+
+dropZone.addEventListener(
+    "drop",
+    function (event) {
+
+        event.preventDefault();
+
+        dropZone.classList.remove(
+            "dragover"
+        );
+
+
+        if (
+            event.dataTransfer.files.length > 0
+        ) {
+
+            input.files =
+                event.dataTransfer.files;
+
+            fileText.textContent =
+                input.files[0].name;
+
+        }
+
+    }
+);
+
+
+
+/* =========================
+   FORM SUBMIT
+========================= */
+
+form.addEventListener(
+    "submit",
+    async function (event) {
+
+        event.preventDefault();
+
+
+        if (
+            !input.files.length
+        ) {
+
+            statusBox.textContent =
+                "Please select a resume.";
+
+            return;
+
+        }
+
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "resume",
+            input.files[0]
+        );
+
+
+        analyzeButton.disabled =
+            true;
+
+
+        analyzeButton.textContent =
+            "Analyzing...";
+
+
+        statusBox.textContent =
+            "Analyzing your resume...";
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/analyze",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    "Analysis failed."
+                );
+
+            }
+
+
+            displayResults(data);
+
+
+            statusBox.textContent =
+                "Analysis completed successfully.";
+
+        }
+
+        catch (error) {
+
+            statusBox.textContent =
+                error.message;
+
+        }
+
+        finally {
+
+            analyzeButton.disabled =
+                false;
+
+
+            analyzeButton.textContent =
+                "Analyze Resume";
+
+        }
+
+    }
+);
+
+
+
+/* =========================
+   DISPLAY RESULTS
+========================= */
+
+function displayResults(data) {
+
+
+    results.classList.remove(
+        "hidden"
+    );
+
+
+    document.getElementById(
+        "filename"
+    ).textContent =
+        data.filename;
+
+
+    document.getElementById(
+        "score"
+    ).textContent =
+        data.score;
+
+
+    document.getElementById(
+        "scoreBar"
+    ).style.width =
+        data.score + "%";
+
+
+    document.getElementById(
+        "email"
+    ).textContent =
+        data.email ||
+        "Not found";
+
+
+    document.getElementById(
+        "phone"
+    ).textContent =
+        data.phone ||
+        "Not found";
+
+
+    document.getElementById(
+        "wordCount"
+    ).textContent =
+        data.word_count;
+
+
+    createChips(
+        "skills",
+        data.skills
+    );
+
+
+    createChips(
+        "keywords",
+        data.keywords
+    );
+
+
+    createJobMatches(
+        data.job_matches
+    );
+
+
+    createSuggestions(
+        data.suggestions
+    );
+
+
+    results.scrollIntoView({
+        behavior: "smooth"
+    });
+
+}
+
+
+
+/* =========================
+   CREATE CHIPS
+========================= */
+
+function createChips(
+    elementId,
+    items
+) {
+
+
+    const container =
+        document.getElementById(
+            elementId
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        !items ||
+        items.length === 0
+    ) {
+
+        const chip =
+            document.createElement(
+                "span"
+            );
+
+
+        chip.className =
+            "chip";
+
+
+        chip.textContent =
+            "None detected";
+
+
+        container.appendChild(
+            chip
+        );
+
+
+        return;
+
+    }
+
+
+    items.forEach(
+        function (item) {
+
+
+            const chip =
+                document.createElement(
+                    "span"
+                );
+
+
+            chip.className =
+                "chip";
+
+
+            chip.textContent =
+                item;
+
+
+            container.appendChild(
+                chip
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   JOB MATCHES
+========================= */
+
+function createJobMatches(
+    jobs
+) {
+
+
+    const container =
+        document.getElementById(
+            "jobMatches"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    jobs.forEach(
+        function (job) {
+
+
+            const wrapper =
+                document.createElement(
+                    "div"
+                );
+
+
+            wrapper.className =
+                "job";
+
+
+            const header =
+                document.createElement(
+                    "div"
+                );
+
+
+            header.className =
+                "job-head";
+
+
+            const role =
+                document.createElement(
+                    "strong"
+                );
+
+
+            role.textContent =
+                job.role;
+
+
+            const percentage =
+                document.createElement(
+                    "span"
+                );
+
+
+            percentage.textContent =
+                job.match + "%";
+
+
+            header.appendChild(
+                role
+            );
+
+
+            header.appendChild(
+                percentage
+            );
+
+
+            const bar =
+                document.createElement(
+                    "div"
+                );
+
+
+            bar.className =
+                "job-bar";
+
+
+            const fill =
+                document.createElement(
+                    "div"
+                );
+
+
+            fill.style.width =
+                job.match + "%";
+
+
+            bar.appendChild(
+                fill
+            );
+
+
+            const missing =
+                document.createElement(
+                    "small"
+                );
+
+
+            if (
+                job.missing.length > 0
+            ) {
+
+                missing.textContent =
+                    "Missing: " +
+                    job.missing.join(
+                        ", "
+                    );
+
+            }
+
+            else {
+
+                missing.textContent =
+                    "Missing: None";
+
+            }
+
+
+            wrapper.appendChild(
+                header
+            );
+
+
+            wrapper.appendChild(
+                bar
+            );
+
+
+            wrapper.appendChild(
+                missing
+            );
+
+
+            container.appendChild(
+                wrapper
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   SUGGESTIONS
+========================= */
+
+function createSuggestions(
+    items
+) {
+
+
+    const list =
+        document.getElementById(
+            "suggestions"
+        );
+
+
+    list.innerHTML =
+        "";
+
+
+    items.forEach(
+        function (item) {
+
+
+            const li =
+                document.createElement(
+                    "li"
+                );
+
+
+            li.textContent =
+                item;
+
+
+            list.appendChild(
+                li
+            );
+
+        }
+    );
+
+}
+
+</script>
+
+
+</body>
+</html>
