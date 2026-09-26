@@ -1083,6 +1083,14 @@
 
 
         // =====================================================
+        // LIVE RENDER BACKEND
+        // =====================================================
+
+        const API_URL =
+            "https://ai-resume-analysis-yj16.onrender.com";
+
+
+        // =====================================================
         // ELEMENTS
         // =====================================================
 
@@ -1244,7 +1252,6 @@
                 const formData =
                     new FormData();
 
-
                 formData.append(
                     "resume",
                     input.files[0]
@@ -1267,12 +1274,12 @@
 
 
                     // =================================================
-                    // SEND TO FLASK
+                    // SEND TO LIVE FLASK SERVER
                     // =================================================
 
                     const response =
                         await fetch(
-                            "/analyze",
+                            API_URL + "/analyze",
                             {
                                 method: "POST",
                                 body: formData
@@ -1315,7 +1322,7 @@
                         );
 
                         throw new Error(
-                            "Server returned HTML instead of JSON. Open http://127.0.0.1:5000 and try again."
+                            "Server returned an unexpected response. Please try again."
                         );
 
                     }
