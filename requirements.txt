@@ -1,0 +1,6 @@
+Flask
+flask-cors
+Werkzeug
+PyPDF2
+python-docx
+gunicorn
